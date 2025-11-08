@@ -44,8 +44,32 @@ chatForm.addEventListener("submit", async (e) => {
   userInput.value = "";
 
   // Show loading message
-  chatWindow.innerHTML += `<div class="msg ai">...</div>`;
+  chatWindow.innerHTML += `<div class="msg ai" id="loading-msg">...</div>`;
   chatWindow.scrollTop = chatWindow.scrollHeight;
 
-  // Next: send messages to Cloudflare Worker and display response
+  // Send messages to Cloudflare Worker and display response
+  try {
+    const response = await fetch(
+      "https://loreal-chatbot-info.arsule.workers.dev/",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages }),
+      }
+    );
+    const data = await response.json();
+    let aiReply =
+      data.choices?.[0]?.message?.content ||
+      "Sorry, I couldn't get a response.";
+    // Add assistant message to history
+    messages.push({ role: "assistant", content: aiReply });
+    renderMessages();
+  } catch (err) {
+    // Show error message
+    messages.push({
+      role: "assistant",
+      content: "Sorry, there was a problem connecting to the server.",
+    });
+    renderMessages();
+  }
 });
